@@ -1,11 +1,10 @@
-const router = require('express').Router();
-const controller = require('../controllers/estudiante.controller');
+const express = require('express');
+const router = express.Router();
+const estudianteController = require('../controllers/estudiante.controller');
 
-router.get('/estudiantes', controller.getEstudiantes);
-router.post('/estudiantes', controller.createEstudiante);
-router.get('/estudiantes/candidatos', controller.getCandidatos); // Ruta especial para el select
-router.get('/estudiantes/:id', controller.getEstudianteById);
-router.put('/estudiantes/:id', controller.updateEstudiante);
-router.delete('/estudiantes/:id', controller.deleteEstudiante);
+router.get('/', estudianteController.getEstudiantes);
+router.get('/candidatos', estudianteController.getCandidatos);
+router.post('/', estudianteController.crearEstudiante);
+router.delete('/:id', estudianteController.eliminarEstudiante);
 
 module.exports = router;

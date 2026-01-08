@@ -22,7 +22,7 @@ const estudianteRoutes = require('./src/routes/estudiante.routes');
 // Usamos las rutas. 
 // Nota: Como en el archivo de rutas ya pusimos '/miembros', aquí usamos la raíz '/'
 app.use('/', miembroRoutes);
-app.use('/', estudianteRoutes);
+app.use('/estudiantes', estudianteRoutes);
 
 // --- INICIAR SERVIDOR ---
 app.listen(3000, () => {
