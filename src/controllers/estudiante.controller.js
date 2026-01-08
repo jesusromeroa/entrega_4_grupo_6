@@ -14,7 +14,7 @@ const getEstudiantes = async (req, res) => {
         res.json(resultado.rows);
     } catch (err) {
         console.error(err.message);
-        res.status(500).send('Error del servidor');
+        res.status(500).send('Error del servidor') ;
     }
 };
 
