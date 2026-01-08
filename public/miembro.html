@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Miembros - SoyUCAB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 SoyUCAB</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="index.html">Volver al Menú Principal</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Directorio de Miembros</h1>
+
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalRegistro">
+                + Nuevo Miembro
+            </button>
+        </div>
+
+        <div class="input-group mb-3">
+            <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar por nombre, apellido o correo...">
+            <button class="btn btn-primary" id="btn-buscar">Buscar</button>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="cursor: pointer;" onclick="ordenar('miembro_id')">ID ↕</th>
+                            <th style="cursor: pointer;" onclick="ordenar('nombres')">Nombres ↕</th>
+                            <th style="cursor: pointer;" onclick="ordenar('apellidos')">Apellidos ↕</th>
+                            <th style="cursor: pointer;" onclick="ordenar('correo')">Correo ↕</th>
+                            <th style="cursor: pointer;" onclick="ordenar('estatus')">Estatus ↕</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-miembros">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center" id="paginacion">
+                </ul>
+        </nav>
+    </div>
+
+    <div class="modal fade" id="modalRegistro" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Registrar Nuevo Miembro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-registro">
+                        <div class="mb-3"><label class="form-label">Nombres *</label><input type="text" id="reg-nombres" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Apellidos *</label><input type="text" id="reg-apellidos" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Correo *</label><input type="email" id="reg-correo" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Contraseña *</label><input type="password" id="reg-password" class="form-control" required></div>
+
+                        <div class="mb-3 text-end">
+                            <button type="button" class="btn btn-link btn-sm" id="btn-toggle-opcionales">⬇ Mostrar campos opcionales</button>
+                        </div>
+
+                        <div id="seccion-opcionales" class="d-none border-top pt-3">
+                            <div class="mb-3"><label class="form-label">URL Foto</label><input type="text" id="reg-foto" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label">Biografía</label><textarea id="reg-biografia" class="form-control" rows="2"></textarea></div>
+                            <div class="mb-3"><label class="form-label">Ciudad</label><select id="reg-ciudad" class="form-select"></select></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mt-2">Guardar Miembro</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEdicion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Editar Miembro</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-edicion">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3"><label class="form-label">Nombres</label><input type="text" id="edit-nombres" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Apellidos</label><input type="text" id="edit-apellidos" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label">Correo</label><input type="email" id="edit-correo" class="form-control" required></div>
+                        <div class="mb-3">
+                            <label class="form-label">Estatus</label>
+                            <select id="edit-estatus" class="form-select">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                                <option value="Suspendido">Suspendido</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 text-end">
+                            <button type="button" class="btn btn-link btn-sm" id="btn-toggle-edit-opcionales">⬇ Mostrar campos opcionales</button>
+                        </div>
+
+                        <div id="seccion-edit-opcionales" class="d-none border-top pt-3">
+                            <div class="mb-3"><label class="form-label">URL Foto</label><input type="text" id="edit-foto" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label">Biografía</label><textarea id="edit-biografia" class="form-control" rows="2"></textarea></div>
+                            <div class="mb-3"><label class="form-label">Ciudad</label><select id="edit-ciudad" class="form-select"></select></div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="js/miembro.js"></script>
+
+</body>
+</html>
