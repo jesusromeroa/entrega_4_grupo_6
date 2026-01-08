@@ -36,7 +36,7 @@
                     <option value="semestre_actual">Ordenar por: Semestre</option>
                 </select>
             </div>
-            <div class="col-md-3 d-flex justify-content-end">
+            <div class="col-md-3">
                 <button class="btn btn-success w-100" onclick="abrirModalRegistro()">+ Registrar Estudiante</button>
             </div>
         </div>
@@ -49,7 +49,7 @@
                             <th onclick="ordenar('miembro_id')">ID ↕</th>
                             <th onclick="ordenar('nombres')">Nombre Completo ↕</th>
                             <th onclick="ordenar('semestre_actual')">Semestre ↕</th>
-                            <th onclick="ordenar('situacion_academica')">Situación ↕</th>
+                            <th class="situacion_academica" >Situación </th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -74,9 +74,9 @@
                 <div class="modal-body">
                     <form id="form-registro">
                         <div class="mb-3">
-                            <label class="form-label">Seleccionar Miembro</label>
+                            <label class="form-label">Seleccionar Miembro UCAB</label>
                             <select id="reg-miembro" class="form-select" required></select>
-                            <small class="text-muted">Solo miembros que no son estudiantes aún.</small>
+                            <small class="text-muted">Solo aparecen miembros que no están registrados como estudiantes.</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Semestre Actual</label>
@@ -92,6 +92,40 @@
                             </select>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Guardar Registro</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEdicion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Editar Información Académica</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-edicion">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3">
+                            <label class="form-label">Estudiante</label>
+                            <input type="text" id="edit-nombre-display" class="form-control" readonly disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Semestre Actual</label>
+                            <input type="number" id="edit-semestre" class="form-control" min="1" max="10" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Situación Académica</label>
+                            <select id="edit-situacion" class="form-select">
+                                <option value="Activo">Activo</option>
+                                <option value="Probatorio">Probatorio</option>
+                                <option value="Retirado">Retirado</option>
+                                <option value="Tesis">Tesis</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">Actualizar Estudiante</button>
                     </form>
                 </div>
             </div>

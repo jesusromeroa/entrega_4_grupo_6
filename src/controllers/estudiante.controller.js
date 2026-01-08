@@ -112,4 +112,53 @@ const eliminarEstudiante = async (req, res) => {
     }
 };
 
-module.exports = { getEstudiantes, getCandidatos, crearEstudiante, eliminarEstudiante };
+// Obtener un estudiante por ID (Para cargar el modal de edición)
+const getEstudianteById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const query = `
+            SELECT e.miembro_id, m.nombres, m.apellidos, e.semestre_actual, e.situacion_academica
+            FROM estudiante e
+            JOIN miembro m ON e.miembro_id = m.miembro_id
+            WHERE e.miembro_id = $1
+        `;
+        const { rows } = await pool.query(query, [id]);
+        if (rows.length === 0) return res.status(404).json({ error: "Estudiante no encontrado" });
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Actualizar datos del estudiante
+const updateEstudiante = async (req, res) => {
+    const { id } = req.params;
+    const { semestre_actual, situacion_academica } = req.body;
+    try {
+        const semestre = semestre_actual === "" ? null : parseInt(semestre_actual);
+        
+        const query = `
+            UPDATE estudiante 
+            SET semestre_actual = $1, situacion_academica = $2 
+            WHERE miembro_id = $3 
+            RETURNING *
+        `;
+        const resultado = await pool.query(query, [semestre, situacion_academica, id]);
+        
+        if (resultado.rows.length === 0) return res.status(404).json({ error: "Estudiante no encontrado" });
+        res.json({ mensaje: "Datos actualizados correctamente", estudiante: resultado.rows[0] });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// Asegúrate de exportarlas al final del archivo
+module.exports = { 
+    getEstudiantes, 
+    getCandidatos, 
+    crearEstudiante, 
+    eliminarEstudiante, 
+    getEstudianteById, // <--- Nueva
+    updateEstudiante   // <--- Nueva
+};
+

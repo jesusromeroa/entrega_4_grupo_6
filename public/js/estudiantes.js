@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarEstudiantes();
     cargarCandidatos();
 
-    // Escuchar búsqueda en tiempo real
+    // Buscador en tiempo real
     document.getElementById('input-busqueda').addEventListener('input', () => {
         cargarEstudiantes(1);
     });
@@ -17,7 +17,6 @@ async function cargarEstudiantes(pagina = 1) {
     const busqueda = document.getElementById('input-busqueda').value;
     const selectOrden = document.getElementById('select-orden').value;
     
-    // Si se cambió el select, actualizamos el orden base
     if(selectOrden !== ordenColumna) ordenColumna = selectOrden;
 
     try {
@@ -29,11 +28,11 @@ async function cargarEstudiantes(pagina = 1) {
         tbody.innerHTML = '';
 
         data.datos.forEach(est => {
-            // Lógica de colores para la situación académica
-            let badgeClass = 'bg-secondary';
-            if (est.situacion_academica === 'Activo') badgeClass = 'bg-success';
+            // Colores dinámicos para los badges de situación
+            let badgeClass = 'bg-success';
             if (est.situacion_academica === 'Probatorio') badgeClass = 'bg-warning text-dark';
             if (est.situacion_academica === 'Retirado') badgeClass = 'bg-danger';
+            if (est.situacion_academica === 'Tesis') badgeClass = 'bg-info text-dark';
 
             tbody.innerHTML += `
                 <tr>
@@ -43,11 +42,10 @@ async function cargarEstudiantes(pagina = 1) {
                         <small class="text-muted">${est.correo}</small>
                     </td>
                     <td><span class="badge rounded-pill bg-dark">Semestre ${est.semestre_actual || '?'}</span></td>
-                    <td><span class="badge ${badgeClass}">${est.situacion_academica || 'N/A'}</span></td>
+                    <td><span class="badge ${badgeClass}">${est.situacion_academica || 'Activo'}</span></td>
                     <td class="text-center">
-                        <button class="btn btn-outline-danger btn-sm" onclick="eliminarEstudiante(${est.miembro_id})">
-                            🗑️ Eliminar
-                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="abrirEditar(${est.miembro_id})" title="Editar">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarEstudiante(${est.miembro_id})" title="Eliminar">🗑️</button>
                     </td>
                 </tr>
             `;
@@ -59,49 +57,63 @@ async function cargarEstudiantes(pagina = 1) {
     }
 }
 
-// Cambiar orden desde las cabeceras (clic en ↕)
-function ordenar(columna) {
-    if (ordenColumna === columna) {
-        ordenDireccion = ordenDireccion === 'ASC' ? 'DESC' : 'ASC';
-    } else {
-        ordenColumna = columna;
-        ordenDireccion = 'ASC';
-    }
-    document.getElementById('select-orden').value = columna;
-    cargarEstudiantes(1);
-}
-
-// Cambiar orden desde el Select
-function cambiarOrden() {
-    ordenColumna = document.getElementById('select-orden').value;
-    ordenDireccion = 'ASC';
-    cargarEstudiantes(1);
-}
-
-function renderizarPaginacion(total, actual) {
-    const nav = document.getElementById('paginacion');
-    nav.innerHTML = '';
-
-    for (let i = 1; i <= total; i++) {
-        nav.innerHTML += `
-            <li class="page-item ${i === actual ? 'active' : ''}">
-                <button class="page-link" onclick="cargarEstudiantes(${i})">${i}</button>
-            </li>
-        `;
-    }
-}
-
+// Carga miembros que no son estudiantes para el select del modal
 async function cargarCandidatos() {
-    const res = await fetch('/estudiantes/candidatos');
-    const miembros = await res.json();
-    const select = document.getElementById('reg-miembro');
-    select.innerHTML = '<option value="">-- Seleccionar Miembro UCAB --</option>';
-    miembros.forEach(m => {
-        select.innerHTML += `<option value="${m.miembro_id}">${m.nombres} ${m.apellidos} (${m.correo})</option>`;
-    });
+    try {
+        const res = await fetch('/estudiantes/candidatos');
+        const miembros = await res.json();
+        const select = document.getElementById('reg-miembro');
+        select.innerHTML = '<option value="">-- Seleccionar Miembro --</option>';
+        miembros.forEach(m => {
+            select.innerHTML += `<option value="${m.miembro_id}">${m.nombres} ${m.apellidos} (ID: ${m.miembro_id})</option>`;
+        });
+    } catch (error) {
+        console.error("Error al cargar candidatos:", error);
+    }
 }
 
-// Evento de envío de formulario corregido
+// Abrir modal de edición y cargar datos específicos
+async function abrirEditar(id) {
+    try {
+        const res = await fetch(`/estudiantes/${id}`);
+        const est = await res.json();
+        
+        document.getElementById('edit-id').value = est.miembro_id;
+        document.getElementById('edit-nombre-display').value = `${est.nombres} ${est.apellidos}`;
+        document.getElementById('edit-semestre').value = est.semestre_actual;
+        document.getElementById('edit-situacion').value = est.situacion_academica;
+
+        new bootstrap.Modal(document.getElementById('modalEdicion')).show();
+    } catch (error) {
+        alert("Error al cargar datos del estudiante");
+    }
+}
+
+// Procesar actualización (PUT)
+document.getElementById('form-edicion').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-id').value;
+    const payload = {
+        semestre_actual: document.getElementById('edit-semestre').value,
+        situacion_academica: document.getElementById('edit-situacion').value
+    };
+
+    const res = await fetch(`/estudiantes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('modalEdicion')).hide();
+        alert('✅ Información actualizada con éxito');
+        cargarEstudiantes(paginaActual);
+    } else {
+        alert('❌ Error al actualizar');
+    }
+});
+
+// Procesar registro (POST)
 document.getElementById('form-registro').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -121,7 +133,7 @@ document.getElementById('form-registro').addEventListener('submit', async (e) =>
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('modalRegistro')).hide();
         alert('✅ Estudiante registrado correctamente');
-        cargarEstudiantes();
+        cargarEstudiantes(1);
         cargarCandidatos();
         e.target.reset();
     } else {
@@ -129,14 +141,52 @@ document.getElementById('form-registro').addEventListener('submit', async (e) =>
     }
 });
 
-function abrirModalRegistro() {
-    new bootstrap.Modal(document.getElementById('modalRegistro')).show();
+// Eliminar registro de estudiante (DELETE)
+async function eliminarEstudiante(id) {
+    if (confirm('¿Seguro que desea eliminar a este estudiante? El miembro seguirá existiendo, pero perderá su estatus estudiantil.')) {
+        try {
+            await fetch(`/estudiantes/${id}`, { method: 'DELETE' });
+            cargarEstudiantes(paginaActual);
+            cargarCandidatos();
+        } catch (error) {
+            alert("Error al eliminar");
+        }
+    }
 }
 
-async function eliminarEstudiante(id) {
-    if (confirm('¿Seguro que desea quitar este miembro de la lista de estudiantes?')) {
-        await fetch(`/estudiantes/${id}`, { method: 'DELETE' });
-        cargarEstudiantes(paginaActual);
-        cargarCandidatos();
+// Lógica de Paginación
+function renderizarPaginacion(total, actual) {
+    const nav = document.getElementById('paginacion');
+    if (!nav) return;
+    nav.innerHTML = '';
+
+    for (let i = 1; i <= total; i++) {
+        nav.innerHTML += `
+            <li class="page-item ${i === actual ? 'active' : ''}">
+                <button class="page-link" onclick="cargarEstudiantes(${i})">${i}</button>
+            </li>
+        `;
     }
+}
+
+// Lógica de Ordenamiento
+function ordenar(columna) {
+    if (ordenColumna === columna) {
+        ordenDireccion = ordenDireccion === 'ASC' ? 'DESC' : 'ASC';
+    } else {
+        ordenColumna = columna;
+        ordenDireccion = 'ASC';
+    }
+    document.getElementById('select-orden').value = columna;
+    cargarEstudiantes(1);
+}
+
+function cambiarOrden() {
+    ordenColumna = document.getElementById('select-orden').value;
+    ordenDireccion = 'ASC';
+    cargarEstudiantes(1);
+}
+
+function abrirModalRegistro() {
+    new bootstrap.Modal(document.getElementById('modalRegistro')).show();
 }
