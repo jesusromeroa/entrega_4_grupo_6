@@ -140,5 +140,5 @@ module.exports = {
     updateGrupo, 
     eliminarGrupo,
     getCreadores,
-    getMiembrosGrupo 
+    getMiembrosGrupo // <--- ¿Está esto aquí?
 };

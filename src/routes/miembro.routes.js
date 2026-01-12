@@ -1,16 +1,13 @@
-const router = require('express').Router();
-const controller = require('../controllers/miembro.controller');
+const express = require('express');
+const router = express.Router();
+const miembroController = require('../controllers/miembro.controller');
 
-// Definimos las rutas
-// Fíjate que usamos '/' porque en el index definiremos que todo esto empieza con /miembros
+// Definir rutas SIN el prefijo "/miembros" (se agregará en index.js)
+router.get('/', miembroController.getMiembros);           // GET /miembros
+router.post('/', miembroController.createMiembro);        // POST /miembros
+router.get('/:id', miembroController.getMiembroById);     // GET /miembros/:id
+router.put('/:id', miembroController.updateMiembro);      // PUT /miembros/:id
+router.delete('/:id', miembroController.deleteMiembro);   // DELETE /miembros/:id
 
-router.get('/miembros', controller.getMiembros);       // Buscar/Listar
-router.post('/miembros', controller.createMiembro);    // Crear
-router.get('/miembros/:id', controller.getMiembroById);// Obtener uno
-router.put('/miembros/:id', controller.updateMiembro); // Modificar
-router.delete('/miembros/:id', controller.deleteMiembro); // Eliminar
-
-// Ruta extra para ciudades
-router.get('/ciudades', controller.getCiudades);
-
+// Nota: La ruta de /ciudades la manejaremos directo en index.js para evitar conflictos
 module.exports = router;

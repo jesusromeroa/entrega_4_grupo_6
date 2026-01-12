@@ -3,11 +3,17 @@ let ordenColumna = 'nombre_grupo';
 let ordenDireccion = 'ASC';
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM Cargado - Iniciando Grupos...");
     cargarGrupos();
     cargarCreadores();
     document.getElementById('input-busqueda').addEventListener('input', () => cargarGrupos(1));
 });
 
+// ==========================================
+// FUNCIONES GLOBALES (ACCESIBLES DESDE HTML)
+// ==========================================
+
+// 1. Cargar la Tabla
 async function cargarGrupos(pagina = 1) {
     paginaActual = pagina;
     const busqueda = document.getElementById('input-busqueda').value;
@@ -29,45 +35,68 @@ async function cargarGrupos(pagina = 1) {
             if(g.categoria_grupo === 'Deportivo') badgeCat = 'bg-danger';
             if(g.categoria_grupo === 'Académico') badgeCat = 'bg-info text-dark';
 
+            // ATENCIÓN: Usamos href="javascript:void(0)" para evitar saltos de página
+            // y escapamos el nombre del grupo para evitar errores de comillas
+            const nombreSafe = g.nombre_grupo.replace(/'/g, "\\'"); 
+
             tbody.innerHTML += `
                 <tr>
-                    <td class="fw-bold">${g.nombre_grupo}</td>
+                    <td>
+                        <a href="javascript:void(0)" class="text-decoration-none fw-bold text-primary" 
+                           onclick="verMiembros('${nombreSafe}')" title="Ver integrantes">
+                            ${g.nombre_grupo} 👥
+                        </a>
+                    </td>
                     <td><small>${g.descripcion || 'Sin descripción'}</small></td>
                     <td><span class="badge ${badgeCat}">${g.categoria_grupo}</span></td>
                     <td><span class="badge ${badgeTipo}">${g.tipo_grupo}</span></td>
                     <td><small>${g.nombres ? g.nombres + ' ' + g.apellidos : 'Desconocido'}</small></td>
                     <td class="text-center">
-                        <button class="btn btn-warning btn-sm" onclick="abrirEditar('${g.nombre_grupo}')">✏️</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarGrupo('${g.nombre_grupo}')">🗑️</button>
+                        <button class="btn btn-warning btn-sm" onclick="abrirEditar('${nombreSafe}')">✏️</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarGrupo('${nombreSafe}')">🗑️</button>
                     </td>
                 </tr>
             `;
         });
 
         renderizarPaginacion(data.totalPaginas, data.paginaActual);
-    } catch (error) { console.error(error); }
+    } catch (error) { 
+        console.error("Error cargando grupos:", error); 
+    }
 }
 
+// 2. Ver Miembros (El Modal)
 async function verMiembros(nombreGrupo) {
+    console.log("Click detectado en grupo:", nombreGrupo); // <--- DEBUG
+
     try {
+        // Referencia al modal
+        const modalEl = document.getElementById('modalMiembros');
+        if (!modalEl) {
+            alert("Error crítico: No se encuentra el modal en el HTML");
+            return;
+        }
+
+        // Mostrar título mientras carga
         document.getElementById('titulo-grupo-miembros').innerText = nombreGrupo;
         const tbody = document.getElementById('lista-miembros-grupo');
         const msgVacio = document.getElementById('sin-miembros');
         
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center">Cargando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-primary">Cargando datos...</td></tr>';
         
-        // Codificamos el nombre por si tiene espacios o caracteres especiales
-        const url = `/grupos/${encodeURIComponent(nombreGrupo)}/miembros`;
-        console.log("Consultando:", url); // Para ver en la consola del navegador
+        // Abrir modal inmediatamente para feedback visual
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
 
+        // Petición al servidor
+        const url = `/grupos/${encodeURIComponent(nombreGrupo)}/miembros`;
         const res = await fetch(url);
         
-        if (!res.ok) {
-            throw new Error(`Error del servidor: ${res.status} ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error("Error en la petición al servidor");
 
         const miembros = await res.json();
-        
+        console.log("Miembros recibidos:", miembros); // <--- DEBUG
+
         tbody.innerHTML = '';
 
         if (miembros.length === 0) {
@@ -90,14 +119,19 @@ async function verMiembros(nombreGrupo) {
                 `;
             });
         }
-
-        new bootstrap.Modal(document.getElementById('modalMiembros')).show();
-
     } catch (error) {
-        console.error(error);
-        alert('❌ Error: ' + error.message + '\n\nRevisa que el servidor esté corriendo y la ruta /grupos configurada en index.js');
+        console.error("Error en verMiembros:", error);
+        alert('❌ Ocurrió un error al cargar los miembros. Revisa la consola (F12).');
     }
 }
+
+// Hacemos las funciones accesibles globalmente
+window.verMiembros = verMiembros;
+window.abrirEditar = abrirEditar;
+window.eliminarGrupo = eliminarGrupo;
+window.cargarGrupos = cargarGrupos;
+
+// ... (Resto de funciones: cargarCreadores, form-registro, etc. pueden ir aquí abajo) ...
 
 async function cargarCreadores() {
     try {
@@ -113,7 +147,6 @@ async function cargarCreadores() {
 
 async function abrirEditar(nombreGrupo) {
     try {
-        // Codificamos el nombre por si tiene espacios o caracteres especiales
         const res = await fetch(`/grupos/${encodeURIComponent(nombreGrupo)}`);
         const g = await res.json();
         
@@ -127,7 +160,6 @@ async function abrirEditar(nombreGrupo) {
     } catch (error) { alert("Error al cargar datos"); }
 }
 
-// POST (Crear)
 document.getElementById('form-registro').addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -146,7 +178,7 @@ document.getElementById('form-registro').addEventListener('submit', async (e) =>
 
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('modalRegistro')).hide();
-        alert('✅ Grupo creado exitosamente');
+        alert('✅ Grupo creado');
         cargarGrupos(1);
         e.target.reset();
     } else {
@@ -155,7 +187,6 @@ document.getElementById('form-registro').addEventListener('submit', async (e) =>
     }
 });
 
-// PUT (Editar)
 document.getElementById('form-edicion').addEventListener('submit', async (e) => {
     e.preventDefault();
     const idOriginal = document.getElementById('edit-id-original').value;
@@ -173,37 +204,16 @@ document.getElementById('form-edicion').addEventListener('submit', async (e) => 
 
     if (res.ok) {
         bootstrap.Modal.getInstance(document.getElementById('modalEdicion')).hide();
-        alert('✅ Grupo actualizado');
+        alert('✅ Actualizado');
         cargarGrupos(paginaActual);
-    } else {
-        alert('❌ Error al actualizar');
     }
 });
 
-// DELETE (Eliminar)
 async function eliminarGrupo(nombre) {
-    if (confirm(`¿Eliminar permanentemente el grupo "${nombre}"?`)) {
+    if (confirm(`¿Eliminar grupo "${nombre}"?`)) {
         await fetch(`/grupos/${encodeURIComponent(nombre)}`, { method: 'DELETE' });
         cargarGrupos(paginaActual);
     }
-}
-
-// Funciones Auxiliares
-function ordenar(columna) {
-    if (ordenColumna === columna) {
-        ordenDireccion = ordenDireccion === 'ASC' ? 'DESC' : 'ASC';
-    } else {
-        ordenColumna = columna;
-        ordenDireccion = 'ASC';
-    }
-    document.getElementById('select-orden').value = columna;
-    cargarGrupos(1);
-}
-
-function cambiarOrden() {
-    ordenColumna = document.getElementById('select-orden').value;
-    ordenDireccion = 'ASC';
-    cargarGrupos(1);
 }
 
 function renderizarPaginacion(total, actual) {
@@ -215,6 +225,12 @@ function renderizarPaginacion(total, actual) {
     }
 }
 
+
 function abrirModalRegistro() {
-    new bootstrap.Modal(document.getElementById('modalRegistro')).show();
+    // Busca el modal por su ID y lo muestra
+    const modal = new bootstrap.Modal(document.getElementById('modalRegistro'));
+    modal.show();
 }
+
+// Hacemos la función visible para el botón HTML
+window.abrirModalRegistro = abrirModalRegistro;

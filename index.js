@@ -8,7 +8,10 @@ const miembroRoutes = require('./src/routes/miembro.routes');
 const estudianteRoutes = require('./src/routes/estudiante.routes');
 const profesorRoutes = require('./src/routes/profesor.routes');
 const egresadoRoutes = require('./src/routes/egresado.routes');
-const grupoRoutes = require('./src/routes/grupo.routes'); // <--- ¡IMPORTANTE!
+const grupoRoutes = require('./src/routes/grupo.routes');
+
+// Importar controlador de miembro para la ruta de ciudades
+const miembroController = require('./src/controllers/miembro.controller'); 
 
 const app = express();
 
@@ -18,20 +21,30 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rutas de la API
-app.use('/miembros', miembroRoutes);
-app.use('/estudiantes', estudianteRoutes);
+// ==========================================
+// REGISTRO DE RUTAS
+// ==========================================
+
+// 1. Ruta auxiliar de Ciudades (Soluciona el error de ciudad)
+app.get('/ciudades', miembroController.getCiudades);
+
+// 2. Rutas Principales (Aquí asignamos los prefijos)
+app.use('/miembros', miembroRoutes);      // Conecta con routes/miembro.routes.js
+app.use('/estudiantes', estudianteRoutes); // Conecta con routes/estudiante.routes.js
 app.use('/profesores', profesorRoutes);
 app.use('/egresados', egresadoRoutes);
-app.use('/grupos', grupoRoutes); // <--- ¡ESTA LÍNEA ES VITAL!
+app.use('/grupos', grupoRoutes);
 
-// Manejo de errores global
+// ==========================================
+
+// Manejo de errores
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).send('Algo salió mal!');
+    res.status(500).json({ error: 'Error interno del servidor' });
 });
 
+// Iniciar
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+    console.log(`✅ Servidor listo en puerto ${PORT}`);
 });
