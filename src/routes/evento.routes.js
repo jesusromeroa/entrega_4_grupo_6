@@ -4,14 +4,5 @@ const eventoController = require('../controllers/evento.controller');
 
 router.get('/', eventoController.getEventos);
 router.get('/organizadores', eventoController.getOrganizadores);
-router.get('/:id', eventoController.getEventoById);
-router.get('/:id/asistentes', eventoController.getAsistentes);
-
-router.post('/', eventoController.crearEvento);
-
-// Aquí era donde fallaba porque updateEvento era undefined
-router.put('/:id', eventoController.updateEvento); 
-
-router.delete('/:id', eventoController.eliminarEvento);
 
 module.exports = router;

@@ -1,150 +1,131 @@
 let paginaActual = 1;
+let ordenColumna = 'fecha_hora_evento'; // Por defecto ordenamos por fecha
+let ordenDireccion = 'DESC'; // Los más recientes primero
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Módulo Eventos Iniciado");
+    console.log("DOM Cargado - Iniciando Eventos...");
     cargarEventos();
-    cargarOrganizadores();
+    
+    // Búsqueda en tiempo real
     document.getElementById('input-busqueda').addEventListener('input', () => cargarEventos(1));
 });
 
-// --- FUNCIONES GLOBALES ---
+// ==========================================
+// FUNCIONES GLOBALES
+// ==========================================
 
 async function cargarEventos(pagina = 1) {
     paginaActual = pagina;
     const busqueda = document.getElementById('input-busqueda').value;
-    const orden = document.getElementById('select-orden').value;
+
+    // Sincronizar select si se cambió manualmente (opcional)
+    // const selectOrden = document.getElementById('select-orden').value;
 
     try {
-        const res = await fetch(`/eventos?pagina=${pagina}&busqueda=${busqueda}&orden=${orden}`);
+        const url = `/eventos?pagina=${pagina}&busqueda=${busqueda}&orden=${ordenColumna}&dir=${ordenDireccion}`;
+        const res = await fetch(url);
         
-        if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
+        if(!res.ok) throw new Error("Error en respuesta del servidor");
 
         const data = await res.json();
         const tbody = document.getElementById('tabla-eventos');
         tbody.innerHTML = '';
 
+        if(data.datos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No se encontraron eventos.</td></tr>';
+            document.getElementById('paginacion').innerHTML = '';
+            return;
+        }
+
         data.datos.forEach(e => {
-            const fecha = new Date(e.fecha_hora_evento).toLocaleString();
-            
-            // Escapar comillas simples para evitar romper el HTML
-            const nombreSafe = e.nombre_evento.replace(/'/g, "\\'"); 
+            // Estilos de badges similares a grupos
+            let badgeClass = 'bg-secondary';
+            if(e.tipo_evento === 'Conferencia') badgeClass = 'bg-primary';
+            if(e.tipo_evento === 'Taller') badgeClass = 'bg-success';
+            if(e.tipo_evento === 'Deportivo') badgeClass = 'bg-danger';
+
+            // Formato de fecha seguro
+            const fecha = new Date(e.fecha_hora_evento).toLocaleString('es-VE', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            const organizador = e.nombres ? `${e.nombres} ${e.apellidos}` : 'Desconocido';
 
             tbody.innerHTML += `
                 <tr>
-                    <td>
-                        <a href="javascript:void(0)" class="fw-bold text-primary text-decoration-none"
-                           onclick="window.verAsistentes('${nombreSafe}')">
-                           📅 ${e.nombre_evento}
-                        </a>
-                    </td>
-                    <td><small>${e.descripcion || ''}</small></td>
-                    <td><span class="badge bg-dark">${fecha}</span></td>
-                    <td>${e.lugar || 'N/A'}</td>
-                    <td>${e.nombres || ''} ${e.apellidos || ''}</td>
-                    <td class="text-center">
-                        <button class="btn btn-danger btn-sm" onclick="window.eliminarEvento('${nombreSafe}')">🗑️</button>
-                    </td>
+                    <td class="fw-bold text-primary">${e.nombre_evento}</td>
+                    <td><small class="text-muted text-truncate-2">${e.descripcion || 'Sin descripción'}</small></td>
+
+                    <td>${fecha}</td>
+                    <td>${e.lugar}</td>
+                    <td><small>${organizador}</small></td>
                 </tr>
             `;
         });
+
         renderizarPaginacion(data.totalPaginas, data.paginaActual);
-    } catch (error) { console.error("Error al cargar eventos:", error); }
-}
 
-async function verAsistentes(nombreEvento) {
-    const modalElement = document.getElementById('modalAsistentes');
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
-    
-    document.getElementById('titulo-evento-asistentes').innerText = nombreEvento;
-    const tbody = document.getElementById('lista-asistentes');
-    tbody.innerHTML = '<tr><td colspan="2" class="text-center">Cargando...</td></tr>';
-
-    try {
-        // IMPORTANTE: encodeURIComponent para manejar espacios en la URL
-        const res = await fetch(`/eventos/${encodeURIComponent(nombreEvento)}/asistentes`);
-        const lista = await res.json();
-        tbody.innerHTML = '';
-
-        if(lista.length === 0) {
-            document.getElementById('sin-asistentes').classList.remove('d-none');
-        } else {
-            document.getElementById('sin-asistentes').classList.add('d-none');
-            lista.forEach(p => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.nombres} ${p.apellidos} <br><small class="text-muted">${p.correo}</small></td>
-                        <td><span class="badge bg-info text-dark">${p.rol_evento || 'Asistente'}</span></td>
-                    </tr>
-                `;
-            });
-        }
     } catch (error) {
-        console.error(error);
-        tbody.innerHTML = '<tr><td colspan="2" class="text-danger">Error al cargar datos</td></tr>';
+        console.error("Error cargando eventos:", error);
+        document.getElementById('tabla-eventos').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error de conexión: ${error.message}</td></tr>`;
     }
 }
 
-async function cargarOrganizadores() {
-    try {
-        const res = await fetch('/eventos/organizadores');
-        const orgs = await res.json();
-        const select = document.getElementById('reg-creador');
-        orgs.forEach(o => select.innerHTML += `<option value="${o.miembro_id}">${o.nombres} ${o.apellidos}</option>`);
-    } catch (e) { console.error(e); }
-}
-
-function abrirModalRegistro() {
-    new bootstrap.Modal(document.getElementById('modalRegistro')).show();
-}
-
-document.getElementById('form-registro').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const payload = {
-        nombre_evento: document.getElementById('reg-nombre').value,
-        descripcion: document.getElementById('reg-desc').value,
-        fecha_hora_evento: document.getElementById('reg-fecha').value,
-        lugar: document.getElementById('reg-lugar').value,
-        miembro_creador_id: document.getElementById('reg-creador').value
-    };
-
-    const res = await fetch('/eventos', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload)
-    });
-
-    if(res.ok) {
-        alert('✅ Evento Creado');
-        bootstrap.Modal.getInstance(document.getElementById('modalRegistro')).hide();
-        cargarEventos(1);
-        e.target.reset();
+// Función para ordenar al hacer click en encabezados (Igual que en grupos.js)
+function ordenar(columna) {
+    if (ordenColumna === columna) {
+        ordenDireccion = ordenDireccion === 'ASC' ? 'DESC' : 'ASC';
     } else {
-        const err = await res.json();
-        // Si el error es por duplicado (PK)
-        alert('Error: ' + (err.error || 'No se pudo crear. Verifica que el nombre no exista ya.'));
+        ordenColumna = columna;
+        ordenDireccion = 'ASC';
     }
-});
-
-async function eliminarEvento(nombreEvento) {
-    if(confirm(`¿Eliminar evento "${nombreEvento}" permanentemente?`)) {
-        // IMPORTANTE: encodeURIComponent
-        await fetch(`/eventos/${encodeURIComponent(nombreEvento)}`, { method: 'DELETE' });
-        cargarEventos(paginaActual);
-    }
+    // Actualizar select visualmente
+    const select = document.getElementById('select-orden');
+    if(select) select.value = columna;
+    
+    cargarEventos(1);
 }
 
-function renderizarPaginacion(total, actual) {
+// Función para ordenar desde el select
+function cambiarOrdenSelect() {
+    ordenColumna = document.getElementById('select-orden').value;
+    ordenDireccion = 'ASC'; // Reset a ascendente al cambiar por select
+    cargarEventos(1);
+}
+
+// Función de Paginación (Reutilizable)
+function renderizarPaginacion(totalPaginas, paginaActual) {
     const nav = document.getElementById('paginacion');
-    if(!nav) return;
     nav.innerHTML = '';
-    for (let i = 1; i <= total; i++) {
-        nav.innerHTML += `<li class="page-item ${i === actual ? 'active' : ''}"><button class="page-link" onclick="cargarEventos(${i})">${i}</button></li>`;
+    
+    if (totalPaginas <= 1) return;
+
+    // Botón Anterior
+    const prevClass = paginaActual === 1 ? 'disabled' : '';
+    nav.innerHTML += `
+        <li class="page-item ${prevClass}">
+            <button class="page-link" onclick="cargarEventos(${paginaActual - 1})">Anterior</button>
+        </li>`;
+
+    // Botones Numéricos
+    for (let i = 1; i <= totalPaginas; i++) {
+        const activeClass = i === paginaActual ? 'active' : '';
+        nav.innerHTML += `
+            <li class="page-item ${activeClass}">
+                <button class="page-link" onclick="cargarEventos(${i})">${i}</button>
+            </li>`;
     }
+
+    // Botón Siguiente
+    const nextClass = paginaActual === totalPaginas ? 'disabled' : '';
+    nav.innerHTML += `
+        <li class="page-item ${nextClass}">
+            <button class="page-link" onclick="cargarEventos(${paginaActual + 1})">Siguiente</button>
+        </li>`;
 }
 
-// EXPORTAR A WINDOW
+// Exponer funciones al window para el HTML
 window.cargarEventos = cargarEventos;
-window.verAsistentes = verAsistentes;
-window.abrirModalRegistro = abrirModalRegistro;
-window.eliminarEvento = eliminarEvento;
+window.ordenar = ordenar;
+window.cambiarOrdenSelect = cambiarOrdenSelect;
