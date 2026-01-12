@@ -20,6 +20,7 @@ const miembroRoutes = require('./src/routes/miembro.routes');
 const estudianteRoutes = require('./src/routes/estudiante.routes');
 app.use('/profesores', require('./src/routes/profesor.routes'));
 app.use('/egresados', require('./src/routes/egresado.routes'));
+app.use('/grupos', require('./src/routes/grupo.routes'));
 
 // Usamos las rutas. 
 // Nota: Como en el archivo de rutas ya pusimos '/miembros', aquí usamos la raíz '/'
