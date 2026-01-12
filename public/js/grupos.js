@@ -56,8 +56,16 @@ async function verMiembros(nombreGrupo) {
         
         tbody.innerHTML = '<tr><td colspan="3" class="text-center">Cargando...</td></tr>';
         
-        // Llamada a la API
-        const res = await fetch(`/grupos/${encodeURIComponent(nombreGrupo)}/miembros`);
+        // Codificamos el nombre por si tiene espacios o caracteres especiales
+        const url = `/grupos/${encodeURIComponent(nombreGrupo)}/miembros`;
+        console.log("Consultando:", url); // Para ver en la consola del navegador
+
+        const res = await fetch(url);
+        
+        if (!res.ok) {
+            throw new Error(`Error del servidor: ${res.status} ${res.statusText}`);
+        }
+
         const miembros = await res.json();
         
         tbody.innerHTML = '';
@@ -67,10 +75,7 @@ async function verMiembros(nombreGrupo) {
         } else {
             msgVacio.classList.add('d-none');
             miembros.forEach(m => {
-                // Formatear fecha
                 const fecha = new Date(m.fecha_union).toLocaleDateString();
-                
-                // Badge para rol
                 const rolBadge = m.rol === 'admin' ? 'bg-danger' : 'bg-secondary';
 
                 tbody.innerHTML += `
@@ -90,7 +95,7 @@ async function verMiembros(nombreGrupo) {
 
     } catch (error) {
         console.error(error);
-        alert('Error al cargar los miembros del grupo.');
+        alert('❌ Error: ' + error.message + '\n\nRevisa que el servidor esté corriendo y la ruta /grupos configurada en index.js');
     }
 }
 

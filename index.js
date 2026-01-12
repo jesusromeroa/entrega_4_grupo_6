@@ -1,33 +1,37 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const path = require('path'); // Necesario para la carpeta public
+const path = require('path');
+
+// Importar rutas
+const miembroRoutes = require('./src/routes/miembro.routes');
+const estudianteRoutes = require('./src/routes/estudiante.routes');
+const profesorRoutes = require('./src/routes/profesor.routes');
+const egresadoRoutes = require('./src/routes/egresado.routes');
+const grupoRoutes = require('./src/routes/grupo.routes'); // <--- ¡IMPORTANTE!
 
 const app = express();
 
-// --- MIDDLEWARES ---
+// Middlewares
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
-
-// --- ARCHIVOS ESTÁTICOS (HTML, CSS, JS) ---
-// Esto permite que el navegador encuentre index.html y tus scripts
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- RUTAS API ---
-// Importamos las rutas que creamos
-const miembroRoutes = require('./src/routes/miembro.routes');
-const estudianteRoutes = require('./src/routes/estudiante.routes');
-app.use('/profesores', require('./src/routes/profesor.routes'));
-app.use('/egresados', require('./src/routes/egresado.routes'));
-app.use('/grupos', require('./src/routes/grupo.routes'));
-
-// Usamos las rutas. 
-// Nota: Como en el archivo de rutas ya pusimos '/miembros', aquí usamos la raíz '/'
-app.use('/', miembroRoutes);
+// Rutas de la API
+app.use('/miembros', miembroRoutes);
 app.use('/estudiantes', estudianteRoutes);
+app.use('/profesores', profesorRoutes);
+app.use('/egresados', egresadoRoutes);
+app.use('/grupos', grupoRoutes); // <--- ¡ESTA LÍNEA ES VITAL!
 
-// --- INICIAR SERVIDOR ---
-app.listen(3000, () => {
-    console.log('Servidor corriendo en puerto 3000');
+// Manejo de errores global
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Algo salió mal!');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
 });
