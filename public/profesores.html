@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SoyUCAB - Gestión de Profesores</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        th { cursor: pointer; }
+        th:hover { background-color: #343a40 !important; color: #ffc107 !important; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 SoyUCAB</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link text-white" href="index.html">Volver al Menú</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="text-center mb-4">Directorio de Profesores</h2>
+
+        <div class="row mb-3 g-2">
+            <div class="col-md-6">
+                <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar por nombre, apellido o correo...">
+            </div>
+            <div class="col-md-3">
+                <select id="select-orden" class="form-select" onchange="cambiarOrden()">
+                    <option value="miembro_id">Ordenar por: ID</option>
+                    <option value="nombres">Ordenar por: Nombre</option>
+                    <option value="escalafon">Ordenar por: Escalafón</option>
+                    <option value="tipo_contrato">Ordenar por: Contrato</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-success w-100" onclick="abrirModalRegistro()">+ Registrar Profesor</button>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th onclick="ordenar('miembro_id')">ID ↕</th>
+                            <th onclick="ordenar('nombres')">Nombre Completo ↕</th>
+                            <th onclick="ordenar('escalafon')">Escalafón ↕</th>
+                            <th onclick="ordenar('tipo_contrato')">Contrato ↕</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-profesores"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center" id="paginacion"></ul>
+        </nav>
+    </div>
+
+    <div class="modal fade" id="modalRegistro" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Registrar Nuevo Profesor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-registro">
+                        <div class="mb-3">
+                            <label class="form-label">Seleccionar Miembro</label>
+                            <select id="reg-miembro" class="form-select" required></select>
+                            <small class="text-muted">Solo miembros que aún no son profesores.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Escalafón</label>
+                            <select id="reg-escalafon" class="form-select" required>
+                                <option value="Instructor">Instructor</option>
+                                <option value="Asistente">Asistente</option>
+                                <option value="Agregado">Agregado</option>
+                                <option value="Asociado">Asociado</option>
+                                <option value="Titular">Titular</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Contrato</label>
+                            <select id="reg-contrato" class="form-select" required>
+                                <option value="Tiempo Completo">Tiempo Completo</option>
+                                <option value="Medio Tiempo">Medio Tiempo</option>
+                                <option value="Tiempo Convencional">Tiempo Convencional</option>
+                                <option value="Dedicación Exclusiva">Dedicación Exclusiva</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Guardar Registro</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEdicion" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Editar Datos Laborales</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-edicion">
+                        <input type="hidden" id="edit-id">
+                        <div class="mb-3">
+                            <label class="form-label">Profesor</label>
+                            <input type="text" id="edit-nombre-display" class="form-control" readonly disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Escalafón</label>
+                            <select id="edit-escalafon" class="form-select">
+                                <option value="Instructor">Instructor</option>
+                                <option value="Asistente">Asistente</option>
+                                <option value="Agregado">Agregado</option>
+                                <option value="Asociado">Asociado</option>
+                                <option value="Titular">Titular</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Contrato</label>
+                            <select id="edit-contrato" class="form-select">
+                                <option value="Tiempo Completo">Tiempo Completo</option>
+                                <option value="Medio Tiempo">Medio Tiempo</option>
+                                <option value="Tiempo Convencional">Tiempo Convencional</option>
+                                <option value="Dedicación Exclusiva">Dedicación Exclusiva</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100">Actualizar Profesor</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/profesores.js"></script>
+</body>
+</html>

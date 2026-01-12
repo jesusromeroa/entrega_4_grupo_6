@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Importamos las rutas que creamos
 const miembroRoutes = require('./src/routes/miembro.routes');
 const estudianteRoutes = require('./src/routes/estudiante.routes');
+app.use('/profesores', require('./src/routes/profesor.routes'));
 
 // Usamos las rutas. 
 // Nota: Como en el archivo de rutas ya pusimos '/miembros', aquí usamos la raíz '/'
