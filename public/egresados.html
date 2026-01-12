@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SoyUCAB - Gestión de Estudiantes</title>
+    <title>SoyUCAB - Gestión de Egresados</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         th { cursor: pointer; }
@@ -23,21 +23,22 @@
     </nav>
 
     <div class="container">
-        <h2 class="text-center mb-4">Directorio de Estudiantes</h2>
+        <h2 class="text-center mb-4">Directorio de Egresados</h2>
 
         <div class="row mb-3 g-2">
             <div class="col-md-6">
-                <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar por nombre, apellido o correo...">
+                <input type="text" id="input-busqueda" class="form-control" placeholder="Buscar por nombre, apellido o título...">
             </div>
             <div class="col-md-3">
                 <select id="select-orden" class="form-select" onchange="cambiarOrden()">
                     <option value="miembro_id">Ordenar por: ID</option>
                     <option value="nombres">Ordenar por: Nombre</option>
-                    <option value="semestre_actual">Ordenar por: Semestre</option>
+                    <option value="ano_graduacion">Ordenar por: Año</option>
+                    <option value="titulo_obtenido">Ordenar por: Título</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-success w-100" onclick="abrirModalRegistro()">+ Registrar Estudiante</button>
+                <button class="btn btn-success w-100" onclick="abrirModalRegistro()">+ Registrar Egresado</button>
             </div>
         </div>
 
@@ -48,13 +49,12 @@
                         <tr>
                             <th onclick="ordenar('miembro_id')">ID ↕</th>
                             <th onclick="ordenar('nombres')">Nombre Completo ↕</th>
-                            <th onclick="ordenar('semestre_actual')">Semestre ↕</th>
-                            <th class="situacion_academica" >Situación </th>
+                            <th onclick="ordenar('titulo_obtenido')">Título Obtenido ↕</th>
+                            <th onclick="ordenar('ano_graduacion')">Año ↕</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-estudiantes">
-                        </tbody>
+                    <tbody id="tabla-egresados"></tbody>
                 </table>
             </div>
         </div>
@@ -64,32 +64,27 @@
         </nav>
     </div>
 
-    <div class="modal fade" id="modalRegistro" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalRegistro" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">Registrar Nuevo Estudiante</h5>
+                    <h5 class="modal-title">Registrar Nuevo Egresado</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="form-registro">
                         <div class="mb-3">
-                            <label class="form-label">Seleccionar Miembro UCAB</label>
+                            <label class="form-label">Seleccionar Miembro</label>
                             <select id="reg-miembro" class="form-select" required></select>
-                            <small class="text-muted">Solo aparecen miembros que no están registrados como estudiantes.</small>
+                            <small class="text-muted">Solo miembros que aún no son egresados.</small>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Semestre Actual</label>
-                            <input type="number" id="reg-semestre" class="form-control" min="1" max="10" required>
+                            <label class="form-label">Título Obtenido</label>
+                            <input type="text" id="reg-titulo" class="form-control" placeholder="Ej. Ingeniero Informático" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Situación Académica</label>
-                            <select id="reg-situacion" class="form-select">
-                                <option value="Activo">Activo</option>
-                                <option value="Probatorio">Probatorio</option>
-                                <option value="Retirado">Retirado</option>
-                                <option value="Tesis">Tesis</option>
-                            </select>
+                            <label class="form-label">Año de Graduación</label>
+                            <input type="number" id="reg-ano" class="form-control" min="1950" max="2100" required>
                         </div>
                         <button type="submit" class="btn btn-success w-100">Guardar Registro</button>
                     </form>
@@ -98,34 +93,29 @@
         </div>
     </div>
 
-    <div class="modal fade" id="modalEdicion" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="modalEdicion" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title">Editar Información Académica</h5>
+                    <h5 class="modal-title">Editar Egresado</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="form-edicion">
                         <input type="hidden" id="edit-id">
                         <div class="mb-3">
-                            <label class="form-label">Estudiante</label>
+                            <label class="form-label">Egresado</label>
                             <input type="text" id="edit-nombre-display" class="form-control" readonly disabled>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Semestre Actual</label>
-                            <input type="number" id="edit-semestre" class="form-control" min="1" max="10" required>
+                            <label class="form-label">Título Obtenido</label>
+                            <input type="text" id="edit-titulo" class="form-control" required>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Situación Académica</label>
-                            <select id="edit-situacion" class="form-select">
-                                <option value="Activo">Activo</option>
-                                <option value="Probatorio">Probatorio</option>
-                                <option value="Retirado">Retirado</option>
-                                <option value="Tesis">Tesis</option>
-                            </select>
+                            <label class="form-label">Año de Graduación</label>
+                            <input type="number" id="edit-ano" class="form-control" min="1950" max="2100" required>
                         </div>
-                        <button type="submit" class="btn btn-warning w-100">Actualizar Estudiante</button>
+                        <button type="submit" class="btn btn-warning w-100">Actualizar Datos</button>
                     </form>
                 </div>
             </div>
@@ -133,6 +123,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/estudiantes.js"></script>
+    <script src="js/egresados.js"></script>
 </body>
 </html>

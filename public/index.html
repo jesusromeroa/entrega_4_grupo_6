@@ -7,64 +7,48 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .card-menu {
-            transition: transform 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s;
             cursor: pointer;
-            text-decoration: none; /* Quita el subrayado de los links */
-            color: inherit; /* Mantiene el color del texto */
+            border: none;
         }
         .card-menu:hover {
-            transform: translateY(-5px); /* Efecto de elevación al pasar el mouse */
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
+        .icon-large { font-size: 4rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body class="bg-light">
 
-    <nav class="navbar navbar-dark bg-primary mb-5">
+    <nav class="navbar navbar-dark bg-dark mb-5 shadow">
         <div class="container">
-            <a class="navbar-brand" href="#">🎓 Sistema de Gestión SoyUCAB</a>
+            <a class="navbar-brand fw-bold" href="#">SoyUCAB</a>
         </div>
     </nav>
 
     <div class="container">
-        <h2 class="text-center mb-5">Bienvenido, Administrador</h2>
-
-        <div class="row g-4">
-            
-            <div class="col-md-4">
-                <a href="miembro.html" class="card h-100 card-menu text-decoration-none">
-                    <div class="card-body text-center p-5">
-                        <div class="display-1 mb-3">👥</div>
-                        <h3 class="card-title">Miembros</h3>
-                        <p class="card-text text-muted">Gestionar registros, editar perfiles y eliminar miembros.</p>
-                        <button class="btn btn-outline-primary mt-3">Ir al Módulo</button>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-4">
-                <a href="estudiantes.html" class="card h-100 card-menu text-decoration-none">
-                    <div class="card-body text-center p-5">
-                        <div class="display-1 mb-3">🎓</div>
-                        <h3 class="card-title">Estudiantes</h3>
-                        <p class="card-text text-muted">Gestionar semestres y situación académica.</p>
-                        <button class="btn btn-outline-primary mt-3">Ir al Módulo</button>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-4">
-                <a href="profesores.html" class="card h-100 card-menu text-decoration-none">
-                    <div class="card-body text-center p-5">
-                        <div class="display-1 mb-3">👨‍🏫</div>
-                        <h3 class="card-title">Profesores</h3>
-                        <p class="card-text text-muted">Gestionar escalafón y tipo de contrato.</p>
-                        <button class="btn btn-outline-primary mt-3">Ir al Módulo</button>
-                    </div>
-                </a>
-            </div>
-
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold text-dark">Bienvenido, Administrador</h1>
+            <p class="lead text-muted">Selecciona un módulo para comenzar a gestionar la comunidad.</p>
         </div>
+
+        <div class="row justify-content-center g-4">
+            
+            <div class="col-md-5">
+                <a href="perfiles.html" class="card h-100 card-menu text-decoration-none text-dark shadow-sm">
+                    <div class="card-body text-center p-5">
+                        <div class="icon-large">👥</div>
+                        <h2 class="card-title fw-bold">Gestión de Perfiles</h2>
+                        <p class="card-text text-muted my-3">
+                            Administra toda la información relacionada con las personas de la comunidad: 
+                            Miembros, Estudiantes, Profesores y Egresados.
+                        </p>
+                        <button class="btn btn-dark btn-lg mt-2">Acceder al Directorio</button>
+                    </div>
+                </a>
+            </div>
+
+            </div>
     </div>
 
 </body>
