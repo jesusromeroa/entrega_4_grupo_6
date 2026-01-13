@@ -1,4 +1,4 @@
-// --- LOGIN ---
+// --- LOGIN (Mismo de antes) ---
 const formLogin = document.getElementById('form-login');
 if (formLogin) {
     formLogin.addEventListener('submit', async (e) => {
@@ -15,16 +15,10 @@ if (formLogin) {
             const data = await res.json();
 
             if (res.ok) {
-                // Guardar usuario en localStorage
                 localStorage.setItem('usuario', JSON.stringify(data.usuario));
                 alert(`Bienvenido, ${data.usuario.nombres}`);
-                
-                // Redirigir según rol
-                if (data.usuario.es_administrador) {
-                    window.location.href = '/index.html'; // Dashboard Admin
-                } else {
-                    window.location.href = '/mi_perfil.html'; // Dashboard Miembro (A crear)
-                }
+                if (data.usuario.es_administrador) window.location.href = '/index.html';
+                else window.location.href = '/mi_perfil.html';
             } else {
                 alert(data.error);
             }
@@ -32,7 +26,7 @@ if (formLogin) {
     });
 }
 
-// --- REGISTRO ---
+// --- REGISTRO (ACTUALIZADO) ---
 const formRegistro = document.getElementById('form-registro');
 if (formRegistro) {
     formRegistro.addEventListener('submit', async (e) => {
@@ -45,10 +39,10 @@ if (formRegistro) {
             correo: document.getElementById('reg-correo').value,
             password: document.getElementById('reg-pass').value,
             tipo: tipo,
-            // Datos extra
-            semestre: document.getElementById('reg-semestre')?.value,
-            escalafon: document.getElementById('reg-escalafon')?.value,
-            ano_graduacion: document.getElementById('reg-ano')?.value
+            // Enviamos los datos extra solo si aplica
+            semestre: tipo === 'Estudiante' ? document.getElementById('reg-semestre').value : null,
+            escalafon: tipo === 'Profesor' ? document.getElementById('reg-escalafon').value : null,
+            ano_graduacion: tipo === 'Egresado' ? document.getElementById('reg-ano').value : null
         };
 
         try {
@@ -69,7 +63,6 @@ if (formRegistro) {
     });
 }
 
-// --- LOGOUT ---
 function logout() {
     localStorage.removeItem('usuario');
     window.location.href = '/login.html';

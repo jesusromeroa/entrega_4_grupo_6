@@ -4,57 +4,28 @@ const pool = require('../config/db');
 const login = async (req, res) => {
     try {
         const { correo, password } = req.body;
-        
-        // 1. Buscar el usuario por correo
-        const query = `
-            SELECT miembro_id, nombres, apellidos, correo, password_hash, es_administrador 
-            FROM miembro 
-            WHERE correo = $1 AND estatus = 'Activo'
-        `;
+        const query = `SELECT miembro_id, nombres, apellidos, correo, password_hash, es_administrador FROM miembro WHERE correo = $1 AND estatus = 'Activo'`;
         const { rows } = await pool.query(query, [correo]);
 
-        if (rows.length === 0) {
-            return res.status(404).json({ error: "Usuario no encontrado o inactivo." });
-        }
-
+        if (rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado." });
+        
         const usuario = rows[0];
+        if (usuario.password_hash !== password) return res.status(401).json({ error: "Contraseña incorrecta." });
 
-        // 2. Verificar contraseña (En producción usar bcrypt, aquí comparación directa por simplicidad)
-        if (usuario.password_hash !== password) {
-            return res.status(401).json({ error: "Contraseña incorrecta." });
-        }
-
-        // 3. Devar datos de sesión (Sin password)
         delete usuario.password_hash;
-        res.json({ 
-            message: "Login exitoso", 
-            usuario: usuario 
-        });
-
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json({ message: "Login exitoso", usuario });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
-// --- REGISTRO DE USUARIO ---
+// --- REGISTRO (Soporta 'Miembro' general) ---
 const register = async (req, res) => {
     const client = await pool.connect();
     try {
-        const { 
-            nombres, apellidos, correo, password, 
-            tipo, // 'Estudiante', 'Profesor', 'Egresado'
-            // Datos específicos según tipo
-            semestre, situacion, // Estudiante
-            escalafon, contrato, // Profesor
-            ano_graduacion, titulo // Egresado
-        } = req.body;
+        const { nombres, apellidos, correo, password, tipo, semestre, situacion, escalafon, contrato, ano_graduacion, titulo } = req.body;
 
         await client.query('BEGIN');
 
-        // 1. Insertar en tabla MIEMBRO
-        // Nota: Asumimos que miembro_id es SERIAL o se genera auto. Si no, habría que calcularlo.
-        // Basado en tu SQL, si no es serial, usamos MAX+1 (simplificado) o RETURNING id si es serial.
-        // Asumiré que la BD maneja el ID o usamos RETURNING miembro_id.
+        // 1. Insertar en MIEMBRO (Base)
         const insertMiembro = `
             INSERT INTO miembro (nombres, apellidos, correo, password_hash, fecha_registro, estatus, es_administrador)
             VALUES ($1, $2, $3, $4, CURRENT_DATE, 'Activo', false)
@@ -63,40 +34,33 @@ const register = async (req, res) => {
         const resMiembro = await client.query(insertMiembro, [nombres, apellidos, correo, password]);
         const nuevoId = resMiembro.rows[0].miembro_id;
 
-        // 2. Insertar en la SUB-TABLA correspondiente
+        // 2. Insertar en SUB-TABLAS (Según el tipo seleccionado)
         if (tipo === 'Estudiante') {
-            await client.query(
-                `INSERT INTO estudiante (miembro_id, semestre_actual, situacion_academica) VALUES ($1, $2, $3)`,
-                [nuevoId, semestre || 1, situacion || 'Regular']
-            );
+            await client.query(`INSERT INTO estudiante (miembro_id, semestre_actual, situacion_academica) VALUES ($1, $2, 'Regular')`, [nuevoId, semestre || 1]);
         } else if (tipo === 'Profesor') {
-            await client.query(
-                `INSERT INTO profesor (miembro_id, escalafon, tipo_contrato) VALUES ($1, $2, $3)`,
-                [nuevoId, escalafon || 'Instructor', contrato || 'Tiempo Completo']
-            );
+            await client.query(`INSERT INTO profesor (miembro_id, escalafon, tipo_contrato) VALUES ($1, $2, 'Tiempo Completo')`, [nuevoId, escalafon || 'Instructor']);
         } else if (tipo === 'Egresado') {
-            await client.query(
-                `INSERT INTO egresado (miembro_id, ano_graduacion, titulo_obtenido) VALUES ($1, $2, $3)`,
-                [nuevoId, ano_graduacion || new Date().getFullYear(), titulo || 'Ingeniero']
-            );
+            await client.query(`INSERT INTO egresado (miembro_id, ano_graduacion, titulo_obtenido) VALUES ($1, $2, 'Ingeniero')`, [nuevoId, ano_graduacion || 2024]);
         }
+        // Si tipo === 'Miembro', no inserta en sub-tablas (correcto para personal administrativo/general)
 
         await client.query('COMMIT');
         res.json({ message: "Registro exitoso", miembro_id: nuevoId });
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error("Error en registro:", err);
-        res.status(500).json({ error: "Error al registrar usuario: " + err.message });
+        console.error("Error registro:", err);
+        res.status(500).json({ error: err.message });
     } finally {
         client.release();
     }
 };
 
-// --- OBTENER PERFIL ---
+// --- OBTENER PERFIL (CORREGIDO: YA NO ESTÁ VACÍO) ---
 const getPerfil = async (req, res) => {
     try {
         const { id } = req.params;
+        // Hacemos LEFT JOIN para traer datos si existen, sino vendrán NULL
         const query = `
             SELECT m.*, 
                 e.semestre_actual, e.situacion_academica,
@@ -109,14 +73,19 @@ const getPerfil = async (req, res) => {
             WHERE m.miembro_id = $1
         `;
         const { rows } = await pool.query(query, [id]);
-        if(rows.length > 0) res.json(rows[0]);
-        else res.status(404).json({error: "Perfil no encontrado"});
+        
+        if(rows.length > 0) {
+            delete rows[0].password_hash; // No enviamos el hash al frontend
+            res.json(rows[0]);
+        } else {
+            res.status(404).json({error: "Perfil no encontrado"});
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
 
-// --- ACTUALIZAR PERFIL ---
+// --- ACTUALIZAR PERFIL (CORREGIDO: YA NO ESTÁ VACÍO) ---
 const updatePerfil = async (req, res) => {
     try {
         const { id } = req.params;
