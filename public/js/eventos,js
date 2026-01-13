@@ -1,0 +1,131 @@
+let paginaActual = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Módulo Eventos Iniciado");
+    cargarEventos();
+    cargarOrganizadores();
+    document.getElementById('input-busqueda').addEventListener('input', () => cargarEventos(1));
+});
+
+// --- FUNCIONES GLOBALES ---
+
+async function cargarEventos(pagina = 1) {
+    paginaActual = pagina;
+    const busqueda = document.getElementById('input-busqueda').value;
+    const orden = document.getElementById('select-orden').value;
+
+    try {
+        const res = await fetch(`/eventos?pagina=${pagina}&busqueda=${busqueda}&orden=${orden}`);
+        const data = await res.json();
+        const tbody = document.getElementById('tabla-eventos');
+        tbody.innerHTML = '';
+
+        data.datos.forEach(e => {
+            // Formatear fechas
+            const inicio = new Date(e.fecha_inicio).toLocaleDateString();
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <a href="javascript:void(0)" class="fw-bold text-primary text-decoration-none"
+                           onclick="window.verAsistentes(${e.evento_id}, '${e.nombre_evento}')">
+                           📅 ${e.nombre_evento}
+                        </a>
+                    </td>
+                    <td><small>${e.descripcion}</small></td>
+                    <td><span class="badge bg-dark">${inicio}</span></td>
+                    <td><span class="badge ${e.tipo_evento === 'Publico' ? 'bg-success' : 'bg-secondary'}">${e.tipo_evento}</span></td>
+                    <td>${e.nombres} ${e.apellidos}</td>
+                    <td class="text-center">
+                        <button class="btn btn-danger btn-sm" onclick="window.eliminarEvento(${e.evento_id})">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+        renderizarPaginacion(data.totalPaginas, data.paginaActual);
+    } catch (error) { console.error(error); }
+}
+
+async function verAsistentes(id, nombre) {
+    const modal = new bootstrap.Modal(document.getElementById('modalAsistentes'));
+    modal.show();
+    document.getElementById('titulo-evento-asistentes').innerText = nombre;
+    
+    const tbody = document.getElementById('lista-asistentes');
+    tbody.innerHTML = '<tr><td colspan="2">Cargando...</td></tr>';
+
+    const res = await fetch(`/eventos/${id}/asistentes`);
+    const lista = await res.json();
+    tbody.innerHTML = '';
+
+    if(lista.length === 0) {
+        document.getElementById('sin-asistentes').classList.remove('d-none');
+    } else {
+        document.getElementById('sin-asistentes').classList.add('d-none');
+        lista.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.nombres} ${p.apellidos} <br><small class="text-muted">${p.correo}</small></td>
+                    <td><span class="badge bg-info text-dark">${p.rol_evento || 'Asistente'}</span></td>
+                </tr>
+            `;
+        });
+    }
+}
+
+async function cargarOrganizadores() {
+    const res = await fetch('/eventos/organizadores');
+    const orgs = await res.json();
+    const select = document.getElementById('reg-organizador');
+    orgs.forEach(o => select.innerHTML += `<option value="${o.miembro_id}">${o.nombres}</option>`);
+}
+
+function abrirModalRegistro() {
+    new bootstrap.Modal(document.getElementById('modalRegistro')).show();
+}
+
+document.getElementById('form-registro').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        nombre_evento: document.getElementById('reg-nombre').value,
+        descripcion: document.getElementById('reg-desc').value,
+        fecha_inicio: document.getElementById('reg-inicio').value,
+        fecha_fin: document.getElementById('reg-fin').value,
+        tipo_evento: document.getElementById('reg-tipo').value,
+        organizador_id: document.getElementById('reg-organizador').value
+    };
+
+    const res = await fetch('/eventos', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+
+    if(res.ok) {
+        alert('Evento Creado');
+        bootstrap.Modal.getInstance(document.getElementById('modalRegistro')).hide();
+        cargarEventos(1);
+    }
+});
+
+async function eliminarEvento(id) {
+    if(confirm('¿Eliminar evento?')) {
+        await fetch(`/eventos/${id}`, { method: 'DELETE' });
+        cargarEventos(paginaActual);
+    }
+}
+
+function renderizarPaginacion(total, actual) {
+    const nav = document.getElementById('paginacion');
+    if(!nav) return;
+    nav.innerHTML = '';
+    for (let i = 1; i <= total; i++) {
+        nav.innerHTML += `<li class="page-item ${i === actual ? 'active' : ''}"><button class="page-link" onclick="cargarEventos(${i})">${i}</button></li>`;
+    }
+}
+
+// EXPORTAR A WINDOW (Evita el error 'is not defined')
+window.cargarEventos = cargarEventos;
+window.verAsistentes = verAsistentes;
+window.abrirModalRegistro = abrirModalRegistro;
+window.eliminarEvento = eliminarEvento;
