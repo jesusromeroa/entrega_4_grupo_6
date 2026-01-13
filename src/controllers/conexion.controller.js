@@ -1,144 +1,128 @@
 const pool = require('../config/db');
 
-// --- SECCIÓN DE CONEXIONES (AMISTADES) ---
-
-// 1. Buscar miembros disponibles para conectar (Excluye a los que ya son amigos o tienen solicitud)
-const getMiembrosParaConectar = async (req, res) => {
+// 1. Obtener LISTA DE TODOS LOS MIEMBROS con su TIPO REAL
+const getAllMiembros = async (req, res) => {
     try {
-        const { id, busqueda = '' } = req.query;
+        const { pagina = 1, busqueda = '' } = req.query;
+        const limite = 10;
+        const offset = (pagina - 1) * limite;
+
+        // Filtro de búsqueda
+        const whereClause = `WHERE m.nombres ILIKE $1 OR m.apellidos ILIKE $1 OR m.correo ILIKE $1`;
+        
+        // CONSULTA MEJORADA:
+        // Usamos LEFT JOIN para verificar si el miembro existe en las sub-tablas
+        // y un CASE para determinar el texto del tipo.
         const query = `
-            SELECT miembro_id, nombres, apellidos, correo 
-            FROM miembro 
-            WHERE miembro_id != $1 
-            AND (nombres ILIKE $2 OR apellidos ILIKE $2 OR correo ILIKE $2)
-            AND miembro_id NOT IN (
-                SELECT miembro_solicitado_id FROM seconecta WHERE miembro_solicitante_id = $1
-                UNION
-                SELECT miembro_solicitante_id FROM seconecta WHERE miembro_solicitado_id = $1
+            SELECT 
+                m.miembro_id, 
+                m.nombres, 
+                m.apellidos, 
+                m.correo,
+                CASE 
+                    WHEN p.miembro_id IS NOT NULL THEN 'Profesor'
+                    WHEN e.miembro_id IS NOT NULL THEN 'Estudiante'
+                    WHEN eg.miembro_id IS NOT NULL THEN 'Egresado'
+                    ELSE 'Miembro'
+                END AS tipo_miembro
+            FROM miembro m
+            LEFT JOIN profesor p ON m.miembro_id = p.miembro_id
+            LEFT JOIN estudiante e ON m.miembro_id = e.miembro_id
+            LEFT JOIN egresado eg ON m.miembro_id = eg.miembro_id
+            ${whereClause}
+            ORDER BY m.nombres ASC
+            LIMIT $2 OFFSET $3
+        `;
+
+        const countQuery = `SELECT COUNT(*) FROM miembro m ${whereClause}`;
+
+        const { rows } = await pool.query(query, [`%${busqueda}%`, limite, offset]);
+        const countRes = await pool.query(countQuery, [`%${busqueda}%`]);
+
+        res.json({
+            datos: rows,
+            totalPaginas: Math.ceil(parseInt(countRes.rows[0].count) / limite),
+            paginaActual: parseInt(pagina)
+        });
+    } catch (err) {
+        console.error("Error en getAllMiembros:", err);
+        res.status(500).json({ error: "Error al cargar miembros: " + err.message });
+    }
+};
+
+// 2. Ver Amigos (Sin cambios, funciona bien)
+const getAmigosDeMiembro = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const query = `
+            SELECT m.nombres, m.apellidos, m.correo, 
+                   s.fecha_solicitud AS fecha_conexion, 
+                   s.estado_conexion AS estatus
+            FROM seconecta s
+            JOIN miembro m ON (
+                CASE 
+                    WHEN s.miembro_solicitante_id = $1 THEN s.miembro_solicitado_id = m.miembro_id
+                    WHEN s.miembro_solicitado_id = $1 THEN s.miembro_solicitante_id = m.miembro_id
+                END
             )
-            LIMIT 10
-        `;
-        const { rows } = await pool.query(query, [id, `%${busqueda}%`]);
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// 2. Enviar una solicitud de conexión (INSERT en seconecta)
-const enviarSolicitud = async (req, res) => {
-    try {
-        const { solicitante_id, solicitado_id } = req.body;
-        // Según tu SQL, el estatus inicial es 'Pendiente'
-        await pool.query(
-            `INSERT INTO seconecta (miembro_solicitante_id, miembro_solicitado_id, estatus, fecha_conexion) 
-             VALUES ($1, $2, 'Pendiente', CURRENT_DATE)`,
-            [solicitante_id, solicitado_id]
-        );
-        res.json({ message: 'Solicitud enviada exitosamente' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// 3. Ver mis amigos (Conexiones con estatus 'Aceptada')
-const getConexiones = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const query = `
-            SELECT m.miembro_id, m.nombres, m.apellidos, m.correo, s.fecha_conexion
-            FROM miembro m
-            JOIN seconecta s ON (m.miembro_id = s.miembro_solicitante_id OR m.miembro_id = s.miembro_solicitado_id)
             WHERE (s.miembro_solicitante_id = $1 OR s.miembro_solicitado_id = $1)
-            AND s.estatus = 'Aceptada' 
-            AND m.miembro_id != $1
+            AND s.estado_conexion = 'Aceptada'
         `;
-        const { rows } = await pool.query(query, [id]);
+        const { rows } = await pool.query(query, [parseInt(id)]);
         res.json(rows);
     } catch (err) {
+        console.error("Error en getAmigos:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
-// 4. Ver solicitudes pendientes recibidas
-const getSolicitudesPendientes = async (req, res) => {
+// 3. Ver Conversaciones (Sin cambios)
+const getConversacionesDeMiembro = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            SELECT m.miembro_id, m.nombres, m.apellidos, s.fecha_conexion
-            FROM miembro m
-            JOIN seconecta s ON m.miembro_id = s.miembro_solicitante_id
-            WHERE s.miembro_solicitado_id = $1 AND s.estatus = 'Pendiente'
-        `;
-        const { rows } = await pool.query(query, [id]);
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// 5. Aceptar una solicitud (UPDATE en seconecta)
-const aceptarSolicitud = async (req, res) => {
-    try {
-        const { solicitante_id, solicitado_id } = req.body;
-        await pool.query(
-            `UPDATE seconecta SET estatus = 'Aceptada', fecha_conexion = CURRENT_DATE 
-             WHERE miembro_solicitante_id = $1 AND miembro_solicitado_id = $2`,
-            [solicitante_id, solicitado_id]
-        );
-        res.json({ message: 'Solicitud aceptada' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-};
-
-// --- SECCIÓN DE CONVERSACIONES ---
-
-// 6. Listar conversaciones donde participa el usuario
-const getConversaciones = async (req, res) => {
-    try {
-        const { id } = req.params;
-        // Seleccionamos conversaciones creadas por el usuario O donde haya enviado mensajes
-        const query = `
-            SELECT DISTINCT c.conversacion_id, c.titulo, c.fecha_creacion, 
-                   m.nombres AS creador_nombres, m.apellidos AS creador_apellidos
+            SELECT DISTINCT c.conversacion_id, 
+                   c.titulo_chat AS titulo, 
+                   c.fecha_inicio AS fecha_creacion,
+                   creador.nombres || ' ' || creador.apellidos AS creador
             FROM conversacion c
-            JOIN miembro m ON c.miembro_creador_id = m.miembro_id
-            LEFT JOIN mensaje msj ON c.conversacion_id = msj.conversacion_id
-            WHERE c.miembro_creador_id = $1 OR msj.miembro_emisor_id = $1
-            ORDER BY c.fecha_creacion DESC
+            JOIN miembro creador ON c.miembro_creador_id = creador.miembro_id
+            LEFT JOIN mensaje m ON c.conversacion_id = m.conversacion_id
+            WHERE c.miembro_creador_id = $1 OR m.miembro_id = $1
+            ORDER BY c.fecha_inicio DESC
         `;
-        const { rows } = await pool.query(query, [id]);
+        const { rows } = await pool.query(query, [parseInt(id)]);
         res.json(rows);
     } catch (err) {
+        console.error("Error en getConversaciones:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
-// 7. Ver el contenido (mensajes) de una conversación específica
-const getMensajesDeConversacion = async (req, res) => {
+// 4. Ver Mensajes (Sin cambios)
+const getMensajes = async (req, res) => {
     try {
-        const { conversacionId } = req.params;
+        const { id } = req.params;
         const query = `
-            SELECT m.contenido, m.fecha_envio, mi.nombres, mi.apellidos
+            SELECT m.texto_mensaje AS contenido, 
+                   m.fecha_hora_envio AS fecha_envio, 
+                   u.nombres, u.apellidos
             FROM mensaje m
-            JOIN miembro mi ON m.miembro_emisor_id = mi.miembro_id
+            JOIN miembro u ON m.miembro_id = u.miembro_id
             WHERE m.conversacion_id = $1
-            ORDER BY m.fecha_envio ASC
+            ORDER BY m.fecha_hora_envio ASC
         `;
-        const { rows } = await pool.query(query, [conversacionId]);
+        const { rows } = await pool.query(query, [parseInt(id)]);
         res.json(rows);
     } catch (err) {
+        console.error("Error en getMensajes:", err);
         res.status(500).json({ error: err.message });
     }
 };
 
-module.exports = {
-    getMiembrosParaConectar,
-    enviarSolicitud,
-    getConexiones,
-    getSolicitudesPendientes,
-    aceptarSolicitud,
-    getConversaciones,
-    getMensajesDeConversacion
+module.exports = { 
+    getAllMiembros, 
+    getAmigosDeMiembro, 
+    getConversacionesDeMiembro, 
+    getMensajes 
 };
