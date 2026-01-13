@@ -10,6 +10,7 @@ const profesorRoutes = require('./src/routes/profesor.routes');
 const egresadoRoutes = require('./src/routes/egresado.routes');
 const grupoRoutes = require('./src/routes/grupo.routes');
 const eventoRoutes = require('./src/routes/evento.routes');
+const conexionRoutes = require('./src/routes/conexion.routes');
 
 // Importar controlador de miembro para la ruta de ciudades
 const miembroController = require('./src/controllers/miembro.controller'); 
@@ -36,6 +37,7 @@ app.use('/profesores', profesorRoutes);
 app.use('/egresados', egresadoRoutes);
 app.use('/grupos', grupoRoutes);
 app.use('/eventos', eventoRoutes);
+app.use('/conexiones', conexionRoutes);
 
 // ==========================================
 
