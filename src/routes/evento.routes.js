@@ -1,15 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const eventoController = require('../controllers/evento.controller');
+const controller = require('../controllers/evento.controller');
 
-// Rutas CRUD Básicas
-router.get('/', eventoController.getEventos);
-router.post('/', eventoController.createEvento);
-router.put('/:id', eventoController.updateEvento);
-router.delete('/:id', eventoController.deleteEvento);
+// Rutas Admin
+router.get('/', controller.getEventos);
+router.post('/', controller.createEvento);
+router.put('/:id', controller.updateEvento);
+router.delete('/:id', controller.deleteEvento);
+router.get('/:id/participantes', controller.getParticipantes);
+router.get('/organizadores', controller.getOrganizadores);
 
-// Rutas Auxiliares
-router.get('/organizadores', eventoController.getOrganizadores);
-router.get('/:id/participantes', eventoController.getParticipantes);
+// Rutas Miembro (NUEVAS)
+router.get('/buscar', controller.getEventosDisponibles); // Buscar eventos
+router.get('/:id/mis-eventos', controller.getMisEventos); // Mis eventos
+router.post('/asistir', controller.asistirEvento);        // Asistir
+router.post('/cancelar', controller.cancelarAsistencia);  // Cancelar
 
 module.exports = router;
