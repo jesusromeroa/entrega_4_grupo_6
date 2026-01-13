@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Perfil - SoyUCAB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">SoyUCAB</a>
+            <div class="d-flex">
+                <span class="navbar-text text-white me-3" id="nav-user-name">Usuario</span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">Salir</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow border-0 text-center p-4">
+                    <img id="p-foto" src="https://via.placeholder.com/150" class="rounded-circle mx-auto mb-3" style="width:120px; height:120px; object-fit:cover;">
+                    <h4 id="p-nombre" class="fw-bold">Cargando...</h4>
+                    <span id="p-tipo" class="badge bg-secondary mb-2">Miembro</span>
+                    <p id="p-correo" class="text-muted small">correo@ucab.edu.ve</p>
+                    
+                    <hr>
+                    <div class="text-start">
+                        <strong>Bio:</strong> <p id="p-bio" class="small text-muted">Sin biografía</p>
+                        <strong>Ciudad:</strong> <p id="p-ciudad" class="small text-muted">-</p>
+                    </div>
+                    <button class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#modalEditar">Editar Perfil</button>
+                    <a href="mis_conexiones.html" class="btn btn-outline-info w-100 mt-2">Mis Conexiones</a>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow border-0 mb-4">
+                    <div class="card-header bg-white fw-bold">Información Académica / Profesional</div>
+                    <div class="card-body" id="info-detalle">
+                        <p class="text-muted">Cargando datos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Información</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-editar">
+                        <div class="mb-3">
+                            <label>Ciudad</label>
+                            <input type="text" id="edit-ciudad" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label>Biografía</label>
+                            <textarea id="edit-bio" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label>URL Foto de Perfil</label>
+                            <input type="text" id="edit-foto" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Cargar datos del perfil al iniciar
+        document.addEventListener('DOMContentLoaded', async () => {
+            const userStr = localStorage.getItem('usuario');
+            if (!userStr) { window.location.href = 'login.html'; return; }
+            
+            const user = JSON.parse(userStr);
+            document.getElementById('nav-user-name').textContent = user.nombres;
+
+            // Obtener datos completos
+            try {
+                const res = await fetch(`/auth/perfil/${user.miembro_id}`);
+                const data = await res.json();
+
+                // Llenar UI
+                document.getElementById('p-nombre').textContent = `${data.nombres} ${data.apellidos}`;
+                document.getElementById('p-correo').textContent = data.correo;
+                document.getElementById('p-bio').textContent = data.biografia || 'Sin biografía';
+                document.getElementById('p-ciudad').textContent = data.nombre_ciudad || 'No especificada';
+                if(data.foto_perfil_url) document.getElementById('p-foto').src = data.foto_perfil_url;
+
+                // Llenar Modal
+                document.getElementById('edit-ciudad').value = data.nombre_ciudad || '';
+                document.getElementById('edit-bio').value = data.biografia || '';
+                document.getElementById('edit-foto').value = data.foto_perfil_url || '';
+
+                // Detalles según rol
+                let detalles = '';
+                if(data.semestre_actual) { // Estudiante
+                    document.getElementById('p-tipo').textContent = 'Estudiante';
+                    document.getElementById('p-tipo').className = 'badge bg-primary mb-2';
+                    detalles = `<ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Semestre:</strong> ${data.semestre_actual}</li>
+                        <li class="list-group-item"><strong>Situación:</strong> ${data.situacion_academica}</li>
+                    </ul>`;
+                } else if (data.escalafon) { // Profesor
+                    document.getElementById('p-tipo').textContent = 'Profesor';
+                    document.getElementById('p-tipo').className = 'badge bg-success mb-2';
+                    detalles = `<ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Escalafón:</strong> ${data.escalafon}</li>
+                        <li class="list-group-item"><strong>Contrato:</strong> ${data.tipo_contrato}</li>
+                    </ul>`;
+                } else if (data.ano_graduacion) { // Egresado
+                    document.getElementById('p-tipo').textContent = 'Egresado';
+                    document.getElementById('p-tipo').className = 'badge bg-warning text-dark mb-2';
+                    detalles = `<ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Año Graduación:</strong> ${data.ano_graduacion}</li>
+                        <li class="list-group-item"><strong>Título:</strong> ${data.titulo_obtenido}</li>
+                    </ul>`;
+                }
+                document.getElementById('info-detalle').innerHTML = detalles;
+
+            } catch (e) { console.error(e); }
+        });
+
+        // Guardar Edición
+        document.getElementById('form-editar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('usuario'));
+            const body = {
+                biografia: document.getElementById('edit-bio').value,
+                nombre_ciudad: document.getElementById('edit-ciudad').value,
+                foto_perfil_url: document.getElementById('edit-foto').value
+            };
+
+            await fetch(`/auth/perfil/${user.miembro_id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            alert('Perfil actualizado');
+            location.reload();
+        });
+    </script>
+</body>
+</html>

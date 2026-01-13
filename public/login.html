@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SoyUCAB - Iniciar Sesión</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .card-login { width: 100%; max-width: 400px; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card card-login shadow border-0">
+        <div class="card-body">
+            <h3 class="text-center mb-4 fw-bold text-primary">SoyUCAB</h3>
+            <form id="form-login">
+                <div class="mb-3">
+                    <label class="form-label">Correo UCAB</label>
+                    <input type="email" id="login-email" class="form-control" required placeholder="usuario@ucab.edu.ve">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" id="login-pass" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Ingresar</button>
+            </form>
+            <div class="text-center mt-3">
+                <small>¿No tienes cuenta? <a href="register.html">Regístrate aquí</a></small>
+            </div>
+        </div>
+    </div>
+    <script src="js/auth.js"></script>
+</body>
+</html>
