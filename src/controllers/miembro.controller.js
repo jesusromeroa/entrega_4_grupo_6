@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require("../config/db.js");
 
 // OBTENER TODOS (Con paginación y filtros)
 const getMiembros = async (req, res) => {

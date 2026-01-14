@@ -1,20 +1,26 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const path = require('path');
+const path = require("node:path");
 
 // Importar rutas
-const miembroRoutes = require('./src/routes/miembro.routes');
-const estudianteRoutes = require('./src/routes/estudiante.routes');
-const profesorRoutes = require('./src/routes/profesor.routes');
-const egresadoRoutes = require('./src/routes/egresado.routes');
-const grupoRoutes = require('./src/routes/grupo.routes');
-const eventoRoutes = require('./src/routes/evento.routes');
-const conexionRoutes = require('./src/routes/conexion.routes');
-const authRoutes = require('./src/routes/auth.routes');
+const miembroRoutes = require('./src/routes/miembro.routes.js');
+const estudianteRoutes = require('./src/routes/estudiante.routes.js');
+const profesorRoutes = require('./src/routes/profesor.routes.js');
+const egresadoRoutes = require('./src/routes/egresado.routes.js');
+const grupoRoutes = require('./src/routes/grupo.routes.js');
+const eventoRoutes = require('./src/routes/evento.routes.js');
+const conexionRoutes = require('./src/routes/conexion.routes.js');
+const authRoutes = require('./src/routes/auth.routes.js');
+const empleosRoutes = require('./src/routes/empleos.routes.js');
+const marketplaceRoutes = require('./src/routes/marketplace.routes.js');
+const alquiler = require('./src/routes/alquiler.routes.js');
+const recomendacion = require('./src/routes/recomendacion.routes.js')
+const reportes = require('./src/routes/reportes.routes.js');
+const admin = require('./src/routes/admin.routes.js');
 
 // Importar controlador de miembro para la ruta de ciudades
-const miembroController = require('./src/controllers/miembro.controller'); 
+const miembroController = require('./src/controllers/miembro.controller.js'); 
 
 const app = express();
 
@@ -40,7 +46,12 @@ app.use('/grupos', grupoRoutes);
 app.use('/eventos', eventoRoutes);
 app.use('/conexiones', conexionRoutes);
 app.use('/auth', authRoutes);
-
+app.use('/empleos', empleosRoutes);
+app.use('/marketplace', marketplaceRoutes);
+app.use('/alquileres', alquiler);
+app.use('/recomendaciones', recomendacion);
+app.use('/reportes', reportes);
+app.use('/admin', admin);
 // ==========================================
 
 // Manejo de errores

@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require('../config/db.js');
 
 // Obtener egresados con búsqueda, paginación y ordenamiento
 const getEgresados = async (req, res) => {

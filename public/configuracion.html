@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SoyUCAB - Configuración Global</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .nav-pills .nav-link.active { background-color: #003366; }
+        .nav-pills .nav-link { color: #003366; }
+        .card-config { border-left: 5px solid #003366; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 SoyUCAB</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Configuración</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-4"><i class="fas fa-cogs me-2"></i>Gestión de la Plataforma</h2>
+
+        <ul class="nav nav-pills mb-4" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-bold" id="pills-roles-tab" data-bs-toggle="pill" data-bs-target="#pills-roles" type="button">
+                    <i class="fas fa-user-tag me-2"></i>Roles y Nexos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-bold" id="pills-elecciones-tab" data-bs-toggle="pill" data-bs-target="#pills-elecciones" type="button">
+                    <i class="fas fa-vote-yea me-2"></i>Procesos Electorales
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            
+            <div class="tab-pane fade show active" id="pills-roles" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-primary text-white fw-bold">Nuevo Tipo de Nexo</div>
+                            <div class="card-body">
+                                <form id="form-rol">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre del Rol</label>
+                                        <input type="text" id="rol-nombre" class="form-control" placeholder="Ej: Investigador Invitado" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Descripción</label>
+                                        <textarea id="rol-desc" class="form-control" rows="3" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">Crear Rol</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm card-config">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Roles Dinámicos Activos</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr><th>ID</th><th>Rol</th><th>Descripción</th><th>Estado</th></tr>
+                                        </thead>
+                                        <tbody id="tabla-roles"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pills-elecciones" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-dark text-white fw-bold">Convocar Elecciones</div>
+                            <div class="card-body">
+                                <form id="form-eleccion">
+                                    <div class="mb-3">
+                                        <label class="form-label">Título del Proceso</label>
+                                        <input type="text" id="elec-titulo" class="form-control" placeholder="Ej: Elecciones 2026" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Fecha de Inicio</label>
+                                        <input type="date" id="elec-fecha" class="form-control" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-dark w-100">Publicar Convocatoria</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card shadow-sm card-config" style="border-left-color: #212529;">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Historial Electoral</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr><th>Proceso</th><th>Fecha</th><th>Estado</th><th>Acción</th></tr>
+                                        </thead>
+                                        <tbody id="tabla-elecciones"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/configuracion.js"></script>
+</body>
+</html>

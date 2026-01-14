@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SoyUCAB - Reportes y Métricas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .table-sm td, .table-sm th { font-size: 0.9rem; }
+        
+        /* Estilos para botones flotantes en las tarjetas */
+        .card-actions { position: absolute; top: 10px; right: 10px; z-index: 10; display: flex; align-items: center; }
+        .btn-expand { color: #6c757d; cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
+        .btn-expand:hover { color: #000; transform: scale(1.1); }
+        .check-pdf { transform: scale(1.3); margin-right: 10px; cursor: pointer; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 SoyUCAB</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Reportes</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-chart-pie me-2"></i>Dashboard de Administración</h2>
+            <div>
+                <button class="btn btn-outline-dark me-2" onclick="seleccionarTodos()">Seleccionar Todo</button>
+                <button class="btn btn-danger" onclick="generarPDF()"><i class="fas fa-file-pdf me-2"></i>Descargar PDF</button>
+            </div>
+        </div>
+
+        <div id="dashboard-content">
+            <div class="row mb-4 report-item">
+                <div class="col-md-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" title="Expandir" onclick="expandirTabla('tabla-demografia', 'Crecimiento de la Comunidad')"></i>
+                        </div>
+                        <div class="card-header bg-primary text-white">📊 Crecimiento de la Comunidad (Cohortes)</div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light"><tr><th>Categoría</th><th>Total</th><th>Nuevos (30d)</th><th>Crecimiento</th></tr></thead>
+                                    <tbody id="tabla-demografia"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4 g-4">
+                <div class="col-md-8 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirGrafico('chartCrecimiento', 'Tendencia Histórica')"></i>
+                        </div>
+                        <div class="card-header bg-white fw-bold">🚀 Tendencia Histórica</div>
+                        <div class="card-body"><div class="chart-container"><canvas id="chartCrecimiento"></canvas></div></div>
+                    </div>
+                </div>
+                <div class="col-md-4 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirGrafico('chartGrupos', 'Grupos Populares')"></i>
+                        </div>
+                        <div class="card-header bg-white fw-bold">🏘️ Grupos en Tendencia</div>
+                        <div class="card-body"><div class="chart-container"><canvas id="chartGrupos"></canvas></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4 g-4">
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirGrafico('chartIntereses', 'Intereses de Formación')"></i>
+                        </div>
+                        <div class="card-header bg-white fw-bold">🎓 Intereses de Formación</div>
+                        <div class="card-body"><div class="chart-container"><canvas id="chartIntereses"></canvas></div></div>
+                    </div>
+                </div>
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirTabla('tabla-votaciones', 'Participación Electoral')"></i>
+                        </div>
+                        <div class="card-header bg-dark text-white">🗳️ Participación Electoral</div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0 table-sm">
+                                <thead><tr><th>Proceso</th><th class="text-center">Votos</th><th>Estado</th></tr></thead>
+                                <tbody id="tabla-votaciones"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirTabla('tabla-empleos', 'Efectividad Bolsa')"></i>
+                        </div>
+                        <div class="card-header bg-success text-white">💼 Efectividad Bolsa</div>
+                        <div class="card-body p-0">
+                            <table class="table table-striped mb-0 table-sm">
+                                <thead><tr><th>Cargo</th><th>Postulantes</th><th>Origen</th></tr></thead>
+                                <tbody id="tabla-empleos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirTabla('tabla-engagement', 'Top Engagement')"></i>
+                        </div>
+                        <div class="card-header bg-warning text-dark">🔥 Top Engagement</div>
+                        <div class="card-body p-0">
+                            <table class="table table-hover mb-0 table-sm">
+                                <thead><tr><th>Contenido</th><th>Puntaje</th><th>Nivel</th></tr></thead>
+                                <tbody id="tabla-engagement"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirTabla('tabla-bolsa', 'Acceso a Bolsa')"></i>
+                        </div>
+                        <div class="card-header bg-info text-white">🎓 Acceso a Bolsa</div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0 table-sm">
+                                <thead><tr><th>Rol</th><th>Nombre</th><th>Detalle</th></tr></thead>
+                                <tbody id="tabla-bolsa"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 report-item">
+                    <div class="card shadow-sm h-100 border-danger">
+                        <div class="card-actions">
+                            <input type="checkbox" class="check-pdf form-check-input" checked>
+                            <i class="fas fa-expand btn-expand" onclick="expandirTabla('tabla-bloqueados', 'Usuarios Bloqueados')"></i>
+                        </div>
+                        <div class="card-header bg-danger text-white">🚫 Bloqueados</div>
+                        <div class="card-body p-0">
+                            <table class="table mb-0 table-sm">
+                                <thead><tr><th>Correo</th><th>Nombre</th><th>Estatus</th></tr></thead>
+                                <tbody id="tabla-bloqueados"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalExpandir" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitulo">Detalle del Reporte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body bg-white">
+                    <div id="contenido-expandido" class="w-100"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/reportes.js"></script>
+</body>
+</html>

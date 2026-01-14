@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>SoyUCAB - Alquileres</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .card-alquiler { transition: transform 0.2s; border-top: 4px solid #fd7e14; }
+        .card-alquiler:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .precio-mes { font-size: 1.4rem; font-weight: bold; color: #fd7e14; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">🏠 SoyUCAB</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#">Alquileres</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>🏘️ Catálogo de Alojamiento</h2>
+            <button class="btn btn-warning text-dark fw-bold" onclick="abrirModalAlquiler()">+ Publicar Inmueble</button>
+        </div>
+
+        <div class="row mb-4 g-2">
+            <div class="col-md-8">
+                <input type="text" id="busqueda" class="form-control" placeholder="Buscar por zona, tipo o condiciones..." onkeyup="filtrarAlquileres()">
+            </div>
+        </div>
+
+        <div id="lista-alquileres" class="row g-4">
+            <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAlquiler" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark">Publicar Alojamiento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="form-alquiler">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">ID Anfitrión (Simulado)</label>
+                            <input type="number" id="alq-miembro-id" class="form-control form-control-sm" placeholder="Ej: 9 (Egresado)" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label">Título del Anuncio</label>
+                                <input type="text" id="alq-titulo" class="form-control" placeholder="Ej: Habitación cerca de la UCAB" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Precio Mensual ($)</label>
+                                <input type="number" id="alq-precio" class="form-control" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Inmueble</label>
+                                <select id="alq-tipo" class="form-select" required>
+                                    <option value="">Cargando...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ciudad / Ubicación</label>
+                                <select id="alq-ciudad" class="form-select" required>
+                                    <option value="">Cargando...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Condiciones</label>
+                            <input type="text" id="alq-condiciones" class="form-control" placeholder="Ej: Solo estudiantes, no mascotas, servicios incluidos">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción Detallada</label>
+                            <textarea id="alq-descripcion" class="form-control" rows="3" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">Publicar Anuncio</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/alquiler.js"></script>
+</body>
+</html>

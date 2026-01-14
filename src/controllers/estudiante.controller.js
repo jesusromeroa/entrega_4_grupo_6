@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const pool = require("../config/db.js");
 
 // Obtener estudiantes con búsqueda, paginación y ordenamiento
 const getEstudiantes = async (req, res) => {
